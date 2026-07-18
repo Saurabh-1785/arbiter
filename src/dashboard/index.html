@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ARBITER — A Causal Runtime Verifier for Multi-Agent AI Systems. Live dashboard showing event streams, state machines, dependency graphs, and violations.">
+    <title>ARBITER — Causal Runtime Verifier Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span class="logo-icon">⬡</span>
+                <h1>ARBITER</h1>
+            </div>
+            <span class="subtitle">Causal Runtime Verifier</span>
+        </div>
+        <div class="header-right">
+            <div class="connection-status" id="connection-status">
+                <span class="status-dot disconnected"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Events</span>
+                    <span class="stat-value" id="event-count">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Violations</span>
+                    <span class="stat-value violation-count" id="violation-count">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Agents</span>
+                    <span class="stat-value" id="agent-count">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard">
+        <!-- Panel 1: Live Event Feed -->
+        <section class="panel event-feed-panel" id="event-feed-panel">
+            <div class="panel-header">
+                <h2>
+                    <span class="panel-icon">◉</span>
+                    Live Event Feed
+                </h2>
+                <div class="panel-controls">
+                    <button class="btn-icon" id="clear-events" title="Clear events">✕</button>
+                    <button class="btn-icon" id="auto-scroll-toggle" title="Toggle auto-scroll">⇩</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="event-feed" id="event-feed">
+                    <div class="event-feed-empty">
+                        <span class="empty-icon">◇</span>
+                        <p>Waiting for events...</p>
+                        <p class="hint">Run <code>python scripts/run_demo.py</code> to start</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel 2: State Machine Status -->
+        <section class="panel state-panel" id="state-panel">
+            <div class="panel-header">
+                <h2>
+                    <span class="panel-icon">⊞</span>
+                    State Machine Status
+                </h2>
+            </div>
+            <div class="panel-body">
+                <div class="state-machines" id="state-machines">
+                    <div class="state-empty">
+                        <span class="empty-icon">◇</span>
+                        <p>No resources tracked yet</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel 3: Dependency Graph (D3.js) -->
+        <section class="panel graph-panel" id="graph-panel">
+            <div class="panel-header">
+                <h2>
+                    <span class="panel-icon">⬢</span>
+                    Dependency Graph
+                </h2>
+                <div class="graph-legend">
+                    <span class="legend-item ww">WW</span>
+                    <span class="legend-item wr">WR</span>
+                    <span class="legend-item rw">RW</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="graph-container" id="graph-container">
+                    <svg id="dependency-graph"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel 4: Violations & Revocations -->
+        <section class="panel violations-panel" id="violations-panel">
+            <div class="panel-header">
+                <h2>
+                    <span class="panel-icon">⚠</span>
+                    Violations & Revocations
+                </h2>
+            </div>
+            <div class="panel-body">
+                <div class="violations-list" id="violations-list">
+                    <div class="violations-empty">
+                        <span class="empty-icon">✓</span>
+                        <p>No violations detected</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Act indicator -->
+    <div class="act-indicator" id="act-indicator" style="display:none;">
+        <span class="act-label" id="act-label">Act 1</span>
+        <span class="act-description" id="act-description">Happy Path</span>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
