@@ -233,6 +233,32 @@ class StateMachineEngineImpl:
         # Resolve the trigger
         trigger = self._resolve_trigger(event)
 
+        # Patch §4: Owner tracking — check BEFORE the transition loop
+        # so double-claims are caught regardless of whether the spec
+        # defines a task_claim transition from the current state.
+        if trigger == "task_claim":
+            if (instance.current_owner is not None
+                    and instance.current_owner != event.agent_id
+                    and instance.state not in ("Idle",)):
+                # Double-claim by different agent — violation
+                violation = TransitionOutcome(
+                    result=TransitionResult.NO_MATCHING_TRANSITION,
+                    resource_id=resource_id,
+                    from_state=instance.state,
+                    to_state=None,
+                    agent_id=event.agent_id,
+                    event=event,
+                    violation_reason=(
+                        f"Double-claim violation: {event.agent_id} attempted to claim "
+                        f"{resource_id} while {instance.current_owner} owns it "
+                        f"(state={instance.state})"
+                    ),
+                )
+                logger.warning("VIOLATION: %s", violation.violation_reason)
+                for cb in self._violation_callbacks:
+                    cb(violation)
+                return violation
+
         # Find matching transitions
         for transition in self._spec.get("transitions", []):
             from_state = transition["from"]
@@ -256,30 +282,6 @@ class StateMachineEngineImpl:
                         guard_name, event.agent_id, resource_id,
                     )
                     continue  # Guard failed, try next transition
-
-            # Patch §4: Owner tracking for task_claim
-            if trigger == "task_claim":
-                if (instance.current_owner is not None
-                        and instance.current_owner != event.agent_id
-                        and instance.state not in ("Idle",)):
-                    # Double-claim by different agent — violation
-                    violation = TransitionOutcome(
-                        result=TransitionResult.NO_MATCHING_TRANSITION,
-                        resource_id=resource_id,
-                        from_state=instance.state,
-                        to_state=None,
-                        agent_id=event.agent_id,
-                        event=event,
-                        violation_reason=(
-                            f"Double-claim violation: {event.agent_id} attempted to claim "
-                            f"{resource_id} while {instance.current_owner} owns it "
-                            f"(state={instance.state})"
-                        ),
-                    )
-                    logger.warning("VIOLATION: %s", violation.violation_reason)
-                    for cb in self._violation_callbacks:
-                        cb(violation)
-                    return violation
 
             # Take the transition
             old_state = instance.state
@@ -353,3 +355,4 @@ class StateMachineEngineImpl:
     def reset(self) -> None:
         """Clear all state for re-runnability (Patch §8)."""
         self._instances.clear()
+        self._violation_callbacks.clear()
