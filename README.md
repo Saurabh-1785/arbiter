@@ -63,10 +63,13 @@ flowchart LR
 ## Quick Start
 
 ```bash
-# Install dependencies
+# 1. Install Python dependencies
 pip install -r requirements.txt
 
-# Run the full three-act demo (with dashboard)
+# 2. Build the React dashboard
+cd frontend && npm install && npm run build && cd ..
+
+# 3. Run the full three-act demo (opens dashboard at http://127.0.0.1:8000)
 python scripts/run_demo.py
 
 # Run headless (no server, for CI)
@@ -76,11 +79,23 @@ python scripts/run_demo.py --headless
 pytest tests/ -v
 ```
 
-The dashboard opens automatically at **http://127.0.0.1:8000** and shows:
+### Development Mode (live reload)
+
+```bash
+# Terminal 1 — FastAPI backend
+python -m uvicorn src.verifier.verifier_service:app --reload --port 8000
+
+# Terminal 2 — Vite dev server (proxies /ws and /api to FastAPI)
+cd frontend && npm run dev
+# Open http://localhost:5173
+```
+
+The dashboard shows:
 - Live event feed with transport labels and HLC timestamps
 - Per-resource state-machine status with visual state flow
 - D3.js dependency graph with WW/WR/RW edge visualization
 - Violations & revocations panel with real-time alerts
+- Light/dark theme toggle (dark theme is true grey, not blue)
 
 ## The Three-Act Demo
 
@@ -148,51 +163,39 @@ arbiter/
   IMPLEMENTATION_PLAN.md              # Phase-by-phase build plan
   pyproject.toml                      # Project config & dependencies
   requirements.txt                    # Pip requirements
+  frontend/                           # React + Vite dashboard
+    package.json
+    vite.config.js
+    index.html                        # Vite entry point
+    src/
+      main.jsx                        # React entry
+      App.jsx                         # Root component
+      index.css                       # Design system (light/dark themes)
+      hooks/
+        useArbiterSocket.js           # WebSocket connection hook
+        useTheme.js                   # Theme toggle hook
+      components/
+        Header.jsx                    # Logo, metrics, theme toggle
+        EventFeed.jsx                 # Live event stream panel
+        StateMachines.jsx             # Per-resource state flow
+        DependencyGraph.jsx           # D3.js force-directed graph
+        Violations.jsx                # Violations & revocations
   src/
     verifier/
       hlc.py                          # Hybrid Logical Clock
       events.py                       # Event, HLCTimestamp schemas
       bus.py                          # In-memory pub/sub event bus
       verifier_service.py             # FastAPI app + WebSocket
-      transports/
-        grpc_sim.py                   # Simulated gRPC transport
-        queue_sim.py                  # Simulated NATS/Kafka queue
-        blackboard_sim.py             # Simulated shared KV store
-        webhook_sim.py                # Simulated webhook transport
-        stdout_sim.py                 # Simulated stdout transport
-      lease/
-        fencing.py                    # FencingLease, LeaseBackend protocol
-        lease_manager.py              # LeaseManager implementation
-        protected_resource.py         # WriteResult, protocol
-        protected_resource_impl.py    # Fencing-token enforcement
-      spec/
-        state_machine.py              # Engine contracts & MachineInstance
-        state_machine_engine.py       # P/Coyote-style engine impl
-        task_ownership_spec.py        # The demo invariant spec
-      anomaly/
-        dependency_graph.py           # Cycle, EdgeType contracts
-        dependency_graph_impl.py      # Elle-style DSG builder
-        cycle_detector.py             # (integrated into graph_impl)
-      capability/
-        tokens.py                     # CapabilityToken contracts
-        capability_store.py           # Token store implementation
-        tool_boundary.py              # Circuit breaker
-      decompose/
-        local_checker.py              # Predicate-slicing boundary
+      transports/                     # 5 simulated transport adapters
+      lease/                          # Fencing tokens & protected resource
+      spec/                           # State machine engine & spec
+      anomaly/                        # Dependency graph & cycle detector
+      capability/                     # Capability tokens & tool boundary
+      decompose/                      # Predicate-slicing boundary
     agents/
       base_agent.py                   # Base agent class
       toy_agents.py                   # Scripted demo agents
-    dashboard/
-      index.html                      # Dashboard UI
-      app.js                          # WebSocket client + D3.js
-      styles.css                      # Dark theme + glassmorphism
-  tests/
-    test_hlc.py                       # HLC unit tests
-    test_fencing.py                   # Fencing token tests
-    test_state_machine.py             # State machine tests
-    test_cycle_detector.py            # Cycle detection tests
-    test_demo_e2e.py                  # Full three-act e2e test
-    test_placeholder.py               # Schema import tests
+  tests/                              # 6 test files, 76 tests
   scripts/
     run_demo.py                       # Three-act demo orchestrator
 ```

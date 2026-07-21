@@ -8,11 +8,11 @@ Tests cover:
 - End-to-end: stale agent's late write is rejected outright
 """
 
-from src.verifier.events import HLCTimestamp
-from src.verifier.lease.fencing import FencingLease, InMemoryLeaseBackend
-from src.verifier.lease.lease_manager import LeaseManager
-from src.verifier.lease.protected_resource import WriteStatus
-from src.verifier.lease.protected_resource_impl import ProtectedResourceImpl
+from backend.verifier.events import HLCTimestamp
+from backend.verifier.lease.fencing import FencingLease, InMemoryLeaseBackend
+from backend.verifier.lease.lease_manager import LeaseManager
+from backend.verifier.lease.protected_resource import WriteStatus
+from backend.verifier.lease.protected_resource_impl import ProtectedResourceImpl
 
 
 class TestFencingTokenMonotonicity:

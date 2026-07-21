@@ -40,3 +40,8 @@ Thumbs.db
 .env
 .env.local
 .env.production
+
+# Node.js / Frontend
+node_modules/
+frontend/dist/
+src/dashboard/dist/

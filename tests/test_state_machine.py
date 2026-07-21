@@ -7,13 +7,13 @@ Tests cover:
 - Fencing conflict drives Violated state
 """
 
-from src.verifier.events import Event, HLCTimestamp
-from src.verifier.spec.state_machine import (
+from backend.verifier.events import Event, HLCTimestamp
+from backend.verifier.spec.state_machine import (
     TransitionResult, TransitionOutcome, MachineInstance, EngineContext,
 )
-from src.verifier.spec.state_machine_engine import StateMachineEngineImpl
-from src.verifier.spec.task_ownership_spec import TASK_OWNERSHIP_SPEC
-from src.verifier.lease.protected_resource_impl import ProtectedResourceImpl
+from backend.verifier.spec.state_machine_engine import StateMachineEngineImpl
+from backend.verifier.spec.task_ownership_spec import TASK_OWNERSHIP_SPEC
+from backend.verifier.lease.protected_resource_impl import ProtectedResourceImpl
 
 
 def make_event(

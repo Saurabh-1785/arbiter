@@ -9,8 +9,8 @@ Tests cover:
 """
 
 import random
-from src.verifier.events import HLCTimestamp, Event
-from src.verifier.hlc import HLCClock, reconstruct_causal_order
+from backend.verifier.events import HLCTimestamp, Event
+from backend.verifier.hlc import HLCClock, reconstruct_causal_order
 
 
 class TestHLCMonotonicity:

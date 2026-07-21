@@ -1,20 +1,20 @@
 """Phase 0 placeholder tests — verify all schemas are importable and constructible."""
 
-from src.verifier.events import Event, HLCTimestamp, TransportType, EventKind
-from src.verifier.lease.fencing import (
+from backend.verifier.events import Event, HLCTimestamp, TransportType, EventKind
+from backend.verifier.lease.fencing import (
     FencingLease, LeaseBackend, InMemoryLeaseBackend, LeaseManagerProtocol,
 )
-from src.verifier.lease.protected_resource import (
+from backend.verifier.lease.protected_resource import (
     WriteResult, WriteStatus, ProtectedResourceProtocol,
 )
-from src.verifier.capability.tokens import (
+from backend.verifier.capability.tokens import (
     CapabilityToken, CapabilityStoreProtocol,
 )
-from src.verifier.spec.state_machine import (
+from backend.verifier.spec.state_machine import (
     TransitionResult, TransitionOutcome, MachineInstance, EngineContext,
     GuardFn, StateMachineEngineProtocol,
 )
-from src.verifier.anomaly.dependency_graph import (
+from backend.verifier.anomaly.dependency_graph import (
     EdgeType, Cycle, DependencyGraphBuilderProtocol,
 )
 

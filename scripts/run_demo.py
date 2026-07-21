@@ -26,24 +26,24 @@ from typing import Any
 # Ensure project root is on path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.verifier.events import Event, HLCTimestamp
-from src.verifier.hlc import HLCClock
-from src.verifier.bus import EventBus
-from src.verifier.lease.lease_manager import LeaseManager
-from src.verifier.lease.protected_resource_impl import ProtectedResourceImpl
-from src.verifier.lease.protected_resource import WriteStatus
-from src.verifier.spec.state_machine import EngineContext, TransitionResult
-from src.verifier.spec.state_machine_engine import StateMachineEngineImpl
-from src.verifier.spec.task_ownership_spec import TASK_OWNERSHIP_SPEC
-from src.verifier.anomaly.dependency_graph_impl import DependencyGraphBuilderImpl
-from src.verifier.capability.capability_store import CapabilityStoreImpl
-from src.verifier.capability.tool_boundary import ToolCallBoundary
-from src.verifier.decompose.local_checker import PassthroughLocalChecker
-from src.verifier.transports.grpc_sim import GrpcSimTransport
-from src.verifier.transports.queue_sim import QueueSimTransport
-from src.verifier.transports.blackboard_sim import BlackboardSimTransport
-from src.verifier.transports.webhook_sim import WebhookSimTransport
-from src.verifier.transports.stdout_sim import StdoutSimTransport
+from backend.verifier.events import Event, HLCTimestamp
+from backend.verifier.hlc import HLCClock
+from backend.verifier.bus import EventBus
+from backend.verifier.lease.lease_manager import LeaseManager
+from backend.verifier.lease.protected_resource_impl import ProtectedResourceImpl
+from backend.verifier.lease.protected_resource import WriteStatus
+from backend.verifier.spec.state_machine import EngineContext, TransitionResult
+from backend.verifier.spec.state_machine_engine import StateMachineEngineImpl
+from backend.verifier.spec.task_ownership_spec import TASK_OWNERSHIP_SPEC
+from backend.verifier.anomaly.dependency_graph_impl import DependencyGraphBuilderImpl
+from backend.verifier.capability.capability_store import CapabilityStoreImpl
+from backend.verifier.capability.tool_boundary import ToolCallBoundary
+from backend.verifier.decompose.local_checker import PassthroughLocalChecker
+from backend.verifier.transports.grpc_sim import GrpcSimTransport
+from backend.verifier.transports.queue_sim import QueueSimTransport
+from backend.verifier.transports.blackboard_sim import BlackboardSimTransport
+from backend.verifier.transports.webhook_sim import WebhookSimTransport
+from backend.verifier.transports.stdout_sim import StdoutSimTransport
 
 # Configure logging
 logging.basicConfig(
@@ -524,7 +524,7 @@ class DemoOrchestrator:
 async def run_with_server():
     """Run the demo with the FastAPI server for the dashboard."""
     import uvicorn
-    from src.verifier.verifier_service import create_app
+    from backend.verifier.verifier_service import create_app
 
     app = create_app()
     config = uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="warning")

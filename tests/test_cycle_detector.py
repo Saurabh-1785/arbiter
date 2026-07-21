@@ -7,8 +7,8 @@ Tests cover:
 - Output is serializable (for the dashboard to render as a node-link graph)
 """
 
-from src.verifier.events import Event, HLCTimestamp
-from src.verifier.anomaly.dependency_graph_impl import DependencyGraphBuilderImpl
+from backend.verifier.events import Event, HLCTimestamp
+from backend.verifier.anomaly.dependency_graph_impl import DependencyGraphBuilderImpl
 
 
 def make_event(
