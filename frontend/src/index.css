@@ -102,6 +102,12 @@ code {
   color: var(--accent);
 }
 
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 /* ──────────────────────────── Header ──────────────────────────── */
 
 .header {
@@ -244,7 +250,8 @@ code {
   grid-template-rows: 1fr 1fr;
   gap: var(--gap);
   padding: var(--gap);
-  height: calc(100vh - 56px);
+  flex: 1;
+  min-height: 0;
 }
 
 /* ──────────────────────────── Card (Panel) ──────────────────────────── */
@@ -634,6 +641,263 @@ code {
   color: var(--danger);
 }
 
+/* ──────────────────────────── Action Buttons ──────────────────────────── */
+
+.header-center {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-1);
+  cursor: pointer;
+  transition: all var(--speed);
+  letter-spacing: 0.2px;
+}
+
+.btn-action:hover:not(:disabled) {
+  background: var(--bg-2);
+  border-color: var(--border-hover);
+  color: var(--text-0);
+}
+
+.btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-action--demo:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.btn-action--test:hover:not(:disabled) {
+  border-color: var(--safe);
+  color: var(--safe);
+  background: var(--safe-dim);
+}
+
+.btn-action--loading {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* ─── Spinner ─── */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--text-3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ──────────────────────────── Results Panel ──────────────────────────── */
+
+.results-panel {
+  position: relative;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  animation: slideDown 0.3s ease-out;
+  transition: background var(--speed), border-color var(--speed);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.results-inner {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.results-close {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all var(--speed);
+}
+
+.results-close:hover {
+  background: var(--bg-2);
+  color: var(--text-0);
+  border-color: var(--border-hover);
+}
+
+.result-section {
+  flex: 1;
+  min-width: 260px;
+}
+
+.result-section--error {
+  color: var(--danger);
+}
+
+.result-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-0);
+  margin-bottom: 10px;
+}
+
+.result-hint {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.result-badge {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+
+.result-badge--pass {
+  color: var(--safe);
+  background: var(--safe-dim);
+}
+
+.result-badge--fail {
+  color: var(--danger);
+  background: var(--danger-dim);
+}
+
+/* ─── Act Cards ─── */
+.result-acts {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.act-card {
+  flex: 1;
+  min-width: 160px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-0);
+  transition: background var(--speed), border-color var(--speed);
+}
+
+.act-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 6px;
+  letter-spacing: 0.1px;
+}
+
+.act-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.act-label {
+  font-size: 0.68rem;
+  color: var(--text-2);
+}
+
+.act-value {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.act-value--ok {
+  color: var(--safe);
+}
+
+.act-value--bad {
+  color: var(--danger);
+}
+
+/* ─── Test Grid ─── */
+.test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 3px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.test-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  animation: fadeUp 0.2s ease-out;
+}
+
+.test-row.passed { color: var(--text-1); }
+.test-row.failed { color: var(--danger); background: var(--danger-dim); }
+.test-row.error  { color: var(--danger); background: var(--danger-dim); }
+
+.test-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.test-row.passed .test-status-dot { background: var(--safe); }
+.test-row.failed .test-status-dot { background: var(--danger); }
+.test-row.error  .test-status-dot { background: var(--danger); }
+
+.test-name {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.test-summary {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
 /* ──────────────────────────── Responsive ──────────────────────────── */
 
 @media (max-width: 960px) {
@@ -652,5 +916,7 @@ code {
     gap: 8px;
   }
 
+  .header-center { order: 3; }
   .metrics { gap: 14px; }
+  .result-acts { flex-direction: column; }
 }

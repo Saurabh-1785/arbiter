@@ -166,3 +166,10 @@ class LeaseManager:
                 if not lease.is_expired()
             }
         return {}
+
+    def reset(self) -> None:
+        """Clear all leases for re-runnability (Patch §8)."""
+        if isinstance(self._backend, InMemoryLeaseBackend):
+            self._backend._active.clear()
+            self._backend._tokens.clear()
+            self._backend._event_counts.clear()

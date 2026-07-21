@@ -624,12 +624,48 @@ async def run_headless():
     return await orchestrator.run_full_demo()
 
 
+async def run_server_only():
+    """Start the server without auto-running the demo.
+
+    Users trigger the demo from the dashboard's 'Run Demo' button.
+    """
+    import uvicorn
+    from backend.verifier.verifier_service import create_app
+
+    app = create_app()
+    config = uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="warning")
+    server = uvicorn.Server(config)
+
+    print(f"\n  {CYAN}ARBITER Dashboard: http://127.0.0.1:8000{RESET}")
+    print(f"  {DIM}Click 'Run Demo' or 'Run Tests' in the dashboard.{RESET}")
+    print(f"  {DIM}Press Ctrl+C to exit.{RESET}\n")
+
+    try:
+        webbrowser.open("http://127.0.0.1:8000")
+    except Exception:
+        pass
+
+    await server.serve()
+
+
 def main():
-    """Entry point for the demo."""
+    """Entry point for the demo.
+
+    Usage:
+        python scripts/run_demo.py             # Start server + auto-run demo
+        python scripts/run_demo.py --serve     # Start server only (use dashboard buttons)
+        python scripts/run_demo.py --headless  # Run demo without server (for CI)
+    """
     headless = "--headless" in sys.argv or "--test" in sys.argv
+    serve_only = "--serve" in sys.argv
 
     if headless:
         results = asyncio.run(run_headless())
+    elif serve_only:
+        try:
+            asyncio.run(run_server_only())
+        except KeyboardInterrupt:
+            print(f"\n{DIM}Server stopped.{RESET}")
     else:
         try:
             results = asyncio.run(run_with_server())

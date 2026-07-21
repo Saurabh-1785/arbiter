@@ -20,6 +20,19 @@ const MoonIcon = () => (
   </svg>
 );
 
+const PlayIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <polygon points="5,3 19,12 5,21" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
 export default function Header({
   connected,
   eventCount,
@@ -27,6 +40,10 @@ export default function Header({
   violationCount,
   theme,
   onToggleTheme,
+  onRunDemo,
+  onRunTests,
+  demoStatus,
+  testStatus,
 }) {
   return (
     <header className="header">
@@ -34,6 +51,33 @@ export default function Header({
         <h1 className="logo">ARBITER</h1>
         <span className="divider" />
         <span className="tagline">Causal Runtime Verifier</span>
+      </div>
+
+      <div className="header-center">
+        <button
+          className={`btn-action btn-action--demo ${demoStatus === 'running' ? 'btn-action--loading' : ''}`}
+          onClick={onRunDemo}
+          disabled={demoStatus === 'running'}
+          id="btn-run-demo"
+        >
+          {demoStatus === 'running' ? (
+            <><span className="spinner" /> Running…</>
+          ) : (
+            <><PlayIcon /> Run Demo</>
+          )}
+        </button>
+        <button
+          className={`btn-action btn-action--test ${testStatus === 'running' ? 'btn-action--loading' : ''}`}
+          onClick={onRunTests}
+          disabled={testStatus === 'running'}
+          id="btn-run-tests"
+        >
+          {testStatus === 'running' ? (
+            <><span className="spinner" /> Testing…</>
+          ) : (
+            <><CheckIcon /> Run Tests</>
+          )}
+        </button>
       </div>
 
       <div className="header-right">

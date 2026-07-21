@@ -307,6 +307,120 @@ def create_app() -> FastAPI:
         """Get the local checker's digest (predicate slicing boundary)."""
         return local_checker.emit_digest()
 
+    # -----------------------------------------------------------------------
+    # Demo & Test runner endpoints
+    # -----------------------------------------------------------------------
+    demo_running = {"active": False}
+
+    @app.post("/api/run-demo")
+    async def run_demo():
+        """Run the three-act demo using the server's shared components.
+
+        Events flow through the shared bus → WS broadcast → dashboard updates live.
+        Returns a summary of all three acts.
+        """
+        if demo_running["active"]:
+            return {"status": "already_running", "message": "Demo is already running"}
+
+        demo_running["active"] = True
+
+        try:
+            # Reset all components for a clean run
+            bus.reset()
+            bus.subscribe(on_bus_event)  # re-subscribe after reset
+            state_engine.reset()
+            state_engine.load_spec(TASK_OWNERSHIP_SPEC)
+            graph_builder.reset()
+            capability_store.reset()
+            protected_resource.reset()
+            lease_manager.reset()
+            violations_log.clear()
+
+            # Import and run the demo orchestrator with shared components
+            import sys, os
+            sys.path.insert(0, str(_PROJECT_ROOT))
+            from scripts.run_demo import DemoOrchestrator
+
+            orchestrator = DemoOrchestrator(
+                bus=bus,
+                lease_manager=lease_manager,
+                protected_resource=protected_resource,
+                state_engine=state_engine,
+                graph_builder=graph_builder,
+                capability_store=capability_store,
+                tool_boundary=tool_boundary,
+                local_checker=local_checker,
+            )
+
+            results = await orchestrator.run_full_demo()
+
+            return {
+                "status": "completed",
+                "results": {
+                    "act1": results["act1"],
+                    "act2": results["act2"],
+                    "act3": results["act3"],
+                },
+                "summary": {
+                    "all_passed": (
+                        results["act1"]["final_state"] == "Acked"
+                        and results["act1"]["violations"] == 0
+                        and results["act2"]["agent_a_write_rejected"]
+                        and results["act2"]["agent_b_write_accepted"]
+                        and results["act3"]["cycles_detected"] >= 1
+                    ),
+                },
+            }
+        except Exception as e:
+            logger.error("Demo failed: %s", e, exc_info=True)
+            return {"status": "error", "message": str(e)}
+        finally:
+            demo_running["active"] = False
+
+    @app.post("/api/run-tests")
+    async def run_tests():
+        """Run pytest and return structured results."""
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--no-header"],
+                capture_output=True,
+                text=True,
+                cwd=str(_PROJECT_ROOT),
+                timeout=60,
+            )
+
+            # Parse pytest output into structured data
+            lines = result.stdout.strip().split("\n")
+            test_results = []
+            summary_line = ""
+
+            for line in lines:
+                if "PASSED" in line or "FAILED" in line or "ERROR" in line:
+                    parts = line.strip().split(" ")
+                    test_name = parts[0] if parts else line
+                    status = "passed" if "PASSED" in line else "failed" if "FAILED" in line else "error"
+                    test_results.append({"name": test_name, "status": status})
+                if line.strip().startswith("=") and ("passed" in line or "failed" in line):
+                    summary_line = line.strip().strip("=").strip()
+
+            return {
+                "status": "completed",
+                "exit_code": result.returncode,
+                "tests": test_results,
+                "summary": summary_line,
+                "passed": result.returncode == 0,
+                "total": len(test_results),
+                "passed_count": len([t for t in test_results if t["status"] == "passed"]),
+                "failed_count": len([t for t in test_results if t["status"] == "failed"]),
+                "raw_output": result.stdout[-2000:] if len(result.stdout) > 2000 else result.stdout,
+            }
+        except subprocess.TimeoutExpired:
+            return {"status": "timeout", "message": "Tests timed out after 60s"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     # Mount static files for dashboard assets
     if DASHBOARD_DIR.exists():
         # For Vite builds, assets are in /assets subdir
