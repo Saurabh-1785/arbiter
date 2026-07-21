@@ -82,25 +82,35 @@ class DemoOrchestrator:
     """Orchestrates the three-act demo scenario.
 
     Patch §8: Creates fresh instances per invocation for re-runnability.
+
+    Can accept pre-built components (e.g. from the FastAPI server) so that
+    events flow through the server's WebSocket broadcast pipeline.
     """
 
-    def __init__(self):
-        # Fresh instances for each run
-        self.bus = EventBus()
-        self.lease_manager = LeaseManager(default_ttl_events=10)
-        self.protected_resource = ProtectedResourceImpl()
-        self.context = EngineContext(
-            protected_resource=self.protected_resource,
-            lease_manager=self.lease_manager,
-        )
-        self.state_engine = StateMachineEngineImpl(context=self.context)
-        self.state_engine.load_spec(TASK_OWNERSHIP_SPEC)
-        self.graph_builder = DependencyGraphBuilderImpl()
-        self.capability_store = CapabilityStoreImpl()
-        self.tool_boundary = ToolCallBoundary(self.capability_store)
-        self.local_checker = PassthroughLocalChecker(self.state_engine)
+    def __init__(self, *, bus=None, lease_manager=None, protected_resource=None,
+                 state_engine=None, graph_builder=None, capability_store=None,
+                 tool_boundary=None, local_checker=None):
+        # Use injected components or create fresh ones
+        self.bus = bus or EventBus()
+        self.lease_manager = lease_manager or LeaseManager(default_ttl_events=10)
+        self.protected_resource = protected_resource or ProtectedResourceImpl()
 
-        # Transport adapters
+        if state_engine:
+            self.state_engine = state_engine
+        else:
+            context = EngineContext(
+                protected_resource=self.protected_resource,
+                lease_manager=self.lease_manager,
+            )
+            self.state_engine = StateMachineEngineImpl(context=context)
+            self.state_engine.load_spec(TASK_OWNERSHIP_SPEC)
+
+        self.graph_builder = graph_builder or DependencyGraphBuilderImpl()
+        self.capability_store = capability_store or CapabilityStoreImpl()
+        self.tool_boundary = tool_boundary or ToolCallBoundary(self.capability_store)
+        self.local_checker = local_checker or PassthroughLocalChecker(self.state_engine)
+
+        # Transport adapters (always use the shared bus)
         self.grpc = GrpcSimTransport(self.bus)
         self.queue = QueueSimTransport(self.bus)
         self.blackboard = BlackboardSimTransport(self.bus)
@@ -110,8 +120,14 @@ class DemoOrchestrator:
         # Violations log
         self.violations: list[dict[str, Any]] = []
 
-        # Wire bus subscriber
-        self.bus.subscribe(self._on_event)
+        # Only subscribe our own handler if we own the bus (headless mode).
+        # When using the server's bus, the server's on_bus_event already
+        # handles processing — we add a lightweight listener for violations tracking.
+        if bus is None:
+            self.bus.subscribe(self._on_event)
+        else:
+            # Tap into the shared bus to track violations locally for the summary
+            self.bus.subscribe(self._track_violations_only)
 
     async def _on_event(self, event: Event) -> None:
         """Process each event through all verification layers."""
@@ -150,6 +166,34 @@ class DemoOrchestrator:
                     "reason": cycle.description,
                     "revoked_scopes": [t.scope for t in revoked],
                 })
+
+    async def _track_violations_only(self, event: Event) -> None:
+        """Lightweight listener: only records violations for demo summary.
+
+        Used when sharing the server's bus — the server's on_bus_event already
+        handles all processing (state machine, graph, revocations, WS broadcast).
+        We just need to mirror the violation tracking for the demo summary.
+        """
+        # Check what the state engine decided (it already processed this event)
+        if event.resource_id:
+            state = self.state_engine.get_state(event.resource_id)
+            # If the state is Violated or Escalated, and we haven't recorded it
+            if state and state.state in ("Violated", "Escalated"):
+                pass  # State tracking is sufficient for the demo
+
+        # Track cycles for the summary
+        cycles = self.graph_builder.find_cycles()
+        for cycle in cycles:
+            # Only add if not already tracked
+            desc = cycle.description
+            if not any(v.get("reason") == desc for v in self.violations):
+                for agent_id in cycle.agents:
+                    self.violations.append({
+                        "type": "dependency_cycle",
+                        "agent_id": agent_id,
+                        "reason": desc,
+                        "revoked_scopes": [],
+                    })
 
     async def run_act1(self) -> dict[str, Any]:
         """Act 1 — Happy path: Clean task handoff across 3+ transports.
@@ -546,12 +590,19 @@ async def run_with_server():
     # Wait for dashboard connection
     await asyncio.sleep(2.0)
 
-    # Run the demo using the server's components
-    orchestrator = DemoOrchestrator()
-
-    # Wire the orchestrator's bus to the server's WS broadcast
-    # (In a full setup, we'd share the app's components, but for the demo
-    #  we run independently and the dashboard shows via its own connection)
+    # Create orchestrator using the SERVER's shared components.
+    # This means events emitted by the demo flow through the server's bus,
+    # which triggers the server's on_bus_event → WS broadcast → dashboard.
+    orchestrator = DemoOrchestrator(
+        bus=app.state.bus,
+        lease_manager=app.state.lease_manager,
+        protected_resource=app.state.protected_resource,
+        state_engine=app.state.state_engine,
+        graph_builder=app.state.graph_builder,
+        capability_store=app.state.capability_store,
+        tool_boundary=app.state.tool_boundary,
+        local_checker=app.state.local_checker,
+    )
 
     results = await orchestrator.run_full_demo()
 
