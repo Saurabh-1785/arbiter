@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 
 const EDGE_COLORS = { ww: '#B8924A', wr: '#5A9E6F', rw: '#C45B5B' };
@@ -8,6 +8,8 @@ const NODE_COLOR_LIGHT = '#1A1A1B';
 export default function DependencyGraph({ graph, theme }) {
   const svgRef = useRef(null);
   const wrapRef = useRef(null);
+  const zoomRef = useRef(null);
+  const [zoomLevel, setZoomLevel] = useState(100);
 
   const { nodes, edges } = graph || { nodes: [], edges: [] };
   const hasData = nodes && nodes.length > 0;
@@ -22,6 +24,16 @@ export default function DependencyGraph({ graph, theme }) {
     const w = rect.width || 400;
     const h = rect.height || 300;
     svg.attr('viewBox', `0 0 ${w} ${h}`);
+
+    const viewport = svg.append('g').attr('class', 'graph-viewport');
+    const zoom = d3.zoom()
+      .scaleExtent([0.35, 12])
+      .on('zoom', (event) => {
+        viewport.attr('transform', event.transform);
+        setZoomLevel(Math.round(event.transform.k * 100));
+      });
+    zoomRef.current = zoom;
+    svg.call(zoom).on('dblclick.zoom', null);
 
     // Arrow markers
     const defs = svg.append('defs');
@@ -57,7 +69,7 @@ export default function DependencyGraph({ graph, theme }) {
       .force('collide', d3.forceCollide(28));
 
     // Edges
-    const links = svg
+    const links = viewport
       .append('g')
       .selectAll('line')
       .data(edgeData)
@@ -67,7 +79,7 @@ export default function DependencyGraph({ graph, theme }) {
       .attr('marker-end', (d) => `url(#arr-${d.type})`);
 
     // Edge labels
-    const labels = svg
+    const labels = viewport
       .append('g')
       .selectAll('text')
       .data(edgeData)
@@ -81,7 +93,7 @@ export default function DependencyGraph({ graph, theme }) {
     const circleFill = theme === 'dark' ? '#2A2A2A' : '#F7F7F8';
     const circleStroke = theme === 'dark' ? '#4A4A4D' : '#E0E0E2';
 
-    const ng = svg
+    const ng = viewport
       .append('g')
       .selectAll('g')
       .data(nodeData)
@@ -134,14 +146,31 @@ export default function DependencyGraph({ graph, theme }) {
     return () => sim.stop();
   }, [hasData, nodes, edges, theme]);
 
+  const adjustZoom = (amount) => {
+    if (!svgRef.current || !zoomRef.current) return;
+    d3.select(svgRef.current).transition().duration(180).call(zoomRef.current.scaleBy, amount);
+  };
+
+  const resetZoom = () => {
+    if (!svgRef.current || !zoomRef.current) return;
+    d3.select(svgRef.current).transition().duration(220).call(zoomRef.current.transform, d3.zoomIdentity);
+  };
+
   return (
     <section className="card card--graph">
       <div className="card-head">
         <h2>Dependency Graph</h2>
-        <div className="legend">
-          <span className="legend-chip legend-ww">WW</span>
-          <span className="legend-chip legend-wr">WR</span>
-          <span className="legend-chip legend-rw">RW</span>
+        <div className="graph-head-actions">
+          <div className="legend" aria-label="Graph edge legend">
+            <span className="legend-chip legend-ww">WW</span>
+            <span className="legend-chip legend-wr">WR</span>
+            <span className="legend-chip legend-rw">RW</span>
+          </div>
+          <div className="graph-controls" aria-label="Graph zoom controls">
+            <button className="graph-control" onClick={() => adjustZoom(1.5)} aria-label="Zoom in">+</button>
+            <button className="graph-control graph-control--reset" onClick={resetZoom}>{zoomLevel}%</button>
+            <button className="graph-control" onClick={() => adjustZoom(0.67)} aria-label="Zoom out">-</button>
+          </div>
         </div>
       </div>
       <div className="card-body card-body--graph" ref={wrapRef}>
@@ -152,6 +181,7 @@ export default function DependencyGraph({ graph, theme }) {
         ) : (
           <div className="graph-wrap">
             <svg ref={svgRef} />
+            <span className="graph-hint">Scroll to zoom · drag to explore</span>
           </div>
         )}
       </div>
