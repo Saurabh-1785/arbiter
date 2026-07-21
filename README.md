@@ -2,6 +2,14 @@
 
 > *ARBITER is a seatbelt for multi-agent systems — it can't stop an agent from thinking something wrong, but it structurally stops it from acting on a stale or duplicated decision.*
 
+**Repository:** [github.com/Saurabh-1785/arbiter](https://github.com/Saurabh-1785/arbiter)
+
+## Built with Codex and GPT-5.6
+
+ARBITER was developed with **Codex powered by GPT-5.6** as a hands-on engineering collaborator. It was used to accelerate implementation across the verifier and dashboard: structuring the React component system, refining the causal dependency-graph interaction (including pan/zoom controls), building the responsive UI and landing page, and reviewing the project setup and production build.
+
+The system design, safety model, and final product decisions remain grounded in the project’s stated distributed-systems foundations; Codex helped turn those decisions into a working, testable application faster.
+
 ## What It Does
 
 Multi-agent AI systems fail in ways single-agent systems don't: two agents grab the same task, a handoff acknowledgment never arrives, one agent silently duplicates work another already finished. These are **coordination bugs**, and they hide across whatever transport each agent happens to use.
